@@ -526,6 +526,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div style="font-size:16px;font-weight:700;color:var(--text);">Patients</div>
       <button style="background:var(--blue);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" onclick="openAddPatient()">+ Add</button>
     </div>
+    <div style="position:relative;margin-bottom:12px;">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint);">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="14" height="14"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l3 3"/></svg>
+      </span>
+      <input type="search" id="mob-patient-search" placeholder="Search patients…" style="width:100%;padding:11px 12px 11px 34px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;background:var(--card);color:var(--text);outline:none;" oninput="renderMobPatients()"/>
+    </div>
     <div id="mob-patients-list"></div>
   </div>
 
@@ -2781,9 +2787,11 @@ function renderMobSchedule(){
 }
 
 function renderMobPatients(){
+  var q = (document.getElementById('mob-patient-search')&&document.getElementById('mob-patient-search').value||'').toLowerCase();
   var list = DB.patients.slice().sort(function(a,b){ return a.name.localeCompare(b.name); });
+  if(q) list = list.filter(function(p){ return p.name.toLowerCase().indexOf(q)>-1 || (p.contact||'').indexOf(q)>-1; });
   if(list.length===0){
-    document.getElementById('mob-patients-list').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:14px;">No patients yet</div>';
+    document.getElementById('mob-patients-list').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:14px;">'+(DB.patients.length===0?'No patients yet':'No results')+'</div>';
     return;
   }
   var t = today();
