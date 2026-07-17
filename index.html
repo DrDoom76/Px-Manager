@@ -1997,6 +1997,7 @@ function saveAppt(){
 
 /* ── Patient Modal ── */
 function openAddPatient(){
+  try{
   editPatientId=null;
   document.getElementById('patient-modal-title').textContent='New Patient';
   document.getElementById('p-name').value='';
@@ -2004,6 +2005,7 @@ function openAddPatient(){
   document.getElementById('p-contact').value='';
   document.getElementById('p-notes').value='';
   openModal('patient-modal');
+  }catch(err){alert('DIAGNOSTIC — openAddPatient failed:\n\n'+err.message);}
 }
 function openPatientDetail(pid){
   var p=DB.patients.find(function(x){return x.id===pid;});
@@ -2129,6 +2131,7 @@ function mesialSideForTooth(num){
 
 /* ── Open / close the full-screen chart ── */
 function openPatientChart(pid){
+  try{
   var p=getPatient(pid);if(!p)return;
   currentChartPatientId=pid;
   if(!p.teeth)p.teeth={};
@@ -2137,6 +2140,7 @@ function openPatientChart(pid){
   renderPatientChartHeader();
   document.getElementById('patient-chart-screen').style.display='block';
   switchChartTab('odontogram');
+  }catch(err){alert('DIAGNOSTIC — openPatientChart failed:\n\n'+err.message);}
 }
 function closePatientChart(){
   document.getElementById('patient-chart-screen').style.display='none';
@@ -3288,6 +3292,13 @@ function exportDocJPEG(){
     btn.textContent='🖼 Download JPEG';
   });
 }
+
+/* ── TEMPORARY DIAGNOSTIC — surfaces any hidden JS error as a popup so it
+   can be read without a developer console. Safe to remove later. ── */
+window.onerror = function(msg, url, line, col, err){
+  alert('DIAGNOSTIC — JS error caught:\n\n' + msg + '\n\nLine: ' + line + ', Col: ' + col);
+  return false;
+};
 
 /* ── init ── */
 function init(){
