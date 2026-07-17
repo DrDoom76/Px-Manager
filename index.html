@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +11,8 @@
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiZGRzRGVudGFsIiwic2hvcnRfbmFtZSI6ImRkc0RlbnRhbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTE2MjgiLCJ0aGVtZV9jb2xvciI6IiMwYTE2MjgifQ=="/>
 <title>ddsDental — Clinic Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -454,12 +457,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div class="app-card-title">Scheduler</div>
       <div class="app-card-sub">Appointments, calendar &amp; reminders</div>
     </div>
+    <div class="app-card" onclick="openApp('documents')">
+      <div class="app-card-icon" style="background:var(--gold-light);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c9920a" stroke-width="1.7" stroke-linecap="round" width="26" height="26"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="app-card-title">Documents</div>
+      <div class="app-card-sub">Prescriptions, certificates &amp; referrals</div>
+    </div>
     <div class="app-card coming-soon">
       <div class="app-card-icon" style="background:rgba(255,255,255,.08);">
         <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.7" stroke-linecap="round" width="26" height="26"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div>
       <div class="app-card-title" style="color:rgba(255,255,255,.55);">More coming soon</div>
-      <div class="app-card-sub">Documents, billing &amp; more</div>
+      <div class="app-card-sub">Billing &amp; more</div>
     </div>
   </div>
 </div>
@@ -562,7 +572,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 </div>
 
 <!-- Mobile FAB - always visible on mobile as backup -->
-<button class="mob-fab" onclick="openMobForm()">+</button>
+<button class="mob-fab" onclick="mobAddClick()">+</button>
 
 <!-- Mobile-specific full screen add form - completely outside layout -->
 <div id="mob-appt-screen" style="display:none;position:fixed;inset:0;z-index:3000;background:#f0f3f8;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);">
@@ -1025,6 +1035,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     </div>
   </div>
 </div>
+
+<!-- ══ DOCUMENTS APP ══ -->
+<div id="documents-screen" style="display:none;position:fixed;inset:0;z-index:2500;background:var(--bg);overflow-y:auto;">
+  <div style="background:var(--navy);padding:20px 20px 16px;position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;">Documents</div>
+      <div style="font-size:12.5px;color:rgba(255,255,255,.55);margin-top:2px;">Prescriptions, certificates &amp; referrals</div>
+    </div>
+    <button onclick="showLauncher()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.85);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" width="14" height="14"><path d="M3 10.5L10 4l7 6.5"/><path d="M5 9.5V16h4v-4h2v4h4V9.5"/></svg>
+      Home
+    </button>
+  </div>
+  <div style="padding:20px 20px 60px;max-width:1180px;margin:0 auto;">
+    <div id="doc-type-tabs" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;"></div>
+    <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1 1 360px;min-width:300px;max-width:440px;" id="doc-form-col"></div>
+      <div style="flex:1 1 480px;min-width:300px;">
+        <div style="overflow-x:auto;padding-bottom:4px;">
+          <div id="doc-paper" style="width:640px;min-width:640px;background:#fff;border:1px solid var(--border);border-radius:4px;padding:44px;box-shadow:var(--shadow-md);"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="exportDocPDF()" id="doc-pdf-btn" style="flex:1;min-width:160px;">⬇ Download PDF</button>
+          <button class="btn-secondary" onclick="exportDocJPEG()" id="doc-jpeg-btn" style="flex:1;min-width:160px;">🖼 Download JPEG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycbwXB2im_ZhnWtRJd6xJ-dTJNMzapSJ6LV7yF64VKkgRnQeUQuUEt9bPkNAwGzcWr6c8/exec';
@@ -2891,11 +2931,18 @@ function showLauncher(){
   document.querySelector('.mob-content').style.display='none';
   document.querySelector('.mobile-nav').style.display='none';
   document.querySelector('.mob-fab').style.display='none';
+  var docScreen=document.getElementById('documents-screen');
+  if(docScreen)docScreen.style.display='none';
 }
 
 function openApp(appName){
   currentApp=appName;
   document.getElementById('launcher-screen').style.display='none';
+  if(appName==='documents'){
+    document.getElementById('documents-screen').style.display='block';
+    initDocumentsApp();
+    return;
+  }
   document.querySelector('.layout').style.display='flex';
   document.querySelector('.mobile-topbar').style.display='block';
   document.querySelector('.mob-content').style.display='block';
@@ -2942,6 +2989,291 @@ function applyMobileAppScope(appName){
 function mobAddClick(){
   if(currentApp==='patients'){openAddPatient();}
   else{openMobForm();}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DOCUMENTS APP — Prescriptions, Certificates, Referral Letters,
+   Treatment Estimates. Pulls patient info from the Patient
+   Management records when available; clinic/dentist details are
+   shared with the Settings tab (DB.config).
+   ══════════════════════════════════════════════════════════════ */
+var DOC_TYPES=[
+  {key:'prescription',label:'Prescription',title:'PRESCRIPTION'},
+  {key:'certificate',label:'Certificate',title:'DENTAL CERTIFICATE'},
+  {key:'referral',label:'Referral Letter',title:'REFERRAL LETTER'},
+  {key:'estimate',label:'Treatment Estimate',title:'TREATMENT ESTIMATE'}
+];
+var CERT_TEMPLATES={
+  'Fit to Work / School':function(ctx){return'This is to certify that '+(ctx.name||'___________________')+(ctx.age?', '+ctx.age+' years old,':'')+' was examined at '+(ctx.clinicName||'this clinic')+' on '+fmtDate(ctx.date)+'. Based on the dental examination conducted, the patient is found fit to return to work/school effective immediately.';},
+  'Fit to Travel':function(ctx){return'This is to certify that '+(ctx.name||'___________________')+(ctx.age?', '+ctx.age+' years old,':'')+' was examined at '+(ctx.clinicName||'this clinic')+' on '+fmtDate(ctx.date)+' and was found to be in good dental health and fit to travel.';},
+  'Medical/Dental Certificate':function(ctx){return'This is to certify that '+(ctx.name||'___________________')+(ctx.age?', '+ctx.age+' years old,':'')+' was examined and/or treated at '+(ctx.clinicName||'this clinic')+' on '+fmtDate(ctx.date)+'. This certificate is issued upon the patient\'s request for whatever legal purpose it may serve.';},
+  'Excuse Letter':function(ctx){return'This is to certify that '+(ctx.name||'___________________')+' was seen and treated at '+(ctx.clinicName||'this clinic')+' on '+fmtDate(ctx.date)+'. The patient is advised to be excused from work/school on this date due to a dental procedure.';}
+};
+
+var docType='prescription';
+var docDate=today();
+var docPatient={id:null,name:'',age:'',dob:'',contact:'',address:''};
+var docPrescription={medications:[{id:uid(),name:'',dose:'',instructions:'',qty:''}],notes:''};
+var docCertificate={certType:'Medical/Dental Certificate',body:''};
+var docReferral={referredTo:'',referredToClinic:'',reason:'',findings:''};
+var docEstimate={items:[{id:uid(),procedure:'',tooth:'',cost:''}],notes:'',validityDays:'30'};
+
+function initDocumentsApp(){
+  renderDocTabs();
+  renderDocForm();
+  renderDocPreview();
+}
+function switchDocType(t){
+  docType=t;
+  if(t==='certificate'&&!docCertificate.body){
+    docCertificate.body=CERT_TEMPLATES[docCertificate.certType]({name:docPatient.name,age:docPatient.age,date:docDate,clinicName:(DB.config&&DB.config.clinicName)||'ddsDental'});
+  }
+  renderDocTabs();renderDocForm();renderDocPreview();
+}
+function renderDocTabs(){
+  var html='';
+  DOC_TYPES.forEach(function(d){
+    var active=docType===d.key;
+    html+='<button onclick="switchDocType(\''+d.key+'\')" style="padding:9px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;border:'+(active?'2px solid var(--blue)':'1px solid var(--border)')+';background:'+(active?'var(--blue-light)':'#fff')+';color:'+(active?'var(--blue)':'var(--muted)')+';">'+d.label+'</button>';
+  });
+  document.getElementById('doc-type-tabs').innerHTML=html;
+}
+
+/* ── Patient picker + clinic settings (shared form parts) ── */
+function renderDocPatientPicker(){
+  var dl='<datalist id="doc-patient-datalist">'+DB.patients.map(function(p){return'<option value="'+p.name.replace(/"/g,'&quot;')+'">';}).join('')+'</datalist>';
+  return'<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;">'+
+    '<div style="font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:10px;">Patient</div>'+
+    '<div class="field"><label>Name (type to search existing patients)</label>'+
+      '<input type="text" id="doc-p-name" list="doc-patient-datalist" value="'+(docPatient.name||'').replace(/"/g,'&quot;')+'" oninput="onDocPatientInput()" placeholder="Juan Dela Cruz"/>'+dl+
+    '</div>'+
+    '<div class="field-row" style="margin-bottom:14px;">'+
+      '<div class="field" style="margin-bottom:0;"><label>Age</label><input type="text" id="doc-p-age" value="'+(docPatient.age||'')+'" oninput="onDocPatientField(\'age\',this.value)"/></div>'+
+      '<div class="field" style="margin-bottom:0;"><label>Contact</label><input type="text" id="doc-p-contact" value="'+(docPatient.contact||'')+'" oninput="onDocPatientField(\'contact\',this.value)"/></div>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:0;"><label>Address</label><input type="text" id="doc-p-address" value="'+(docPatient.address||'')+'" oninput="onDocPatientField(\'address\',this.value)"/></div>'+
+  '</div>'+
+  '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;">'+
+    '<div class="field" style="margin-bottom:0;"><label>Document date</label><input type="date" id="doc-date" value="'+docDate+'" onchange="onDocDateChange(this.value)"/></div>'+
+  '</div>';
+}
+function onDocPatientInput(){
+  var name=document.getElementById('doc-p-name').value;
+  docPatient.name=name;
+  var match=DB.patients.find(function(p){return p.name===name;});
+  if(match){
+    docPatient={id:match.id,name:match.name,age:match.age||'',dob:match.dob||'',contact:match.contact||'',address:match.address||''};
+  } else {
+    docPatient.id=null;
+  }
+  renderDocForm();renderDocPreview();
+}
+function onDocPatientField(key,val){
+  docPatient[key]=val;
+  renderDocPreview();
+}
+function onDocDateChange(val){
+  docDate=val||today();
+  if(docType==='certificate'){
+    docCertificate.body=CERT_TEMPLATES[docCertificate.certType]({name:docPatient.name,age:docPatient.age,date:docDate,clinicName:(DB.config&&DB.config.clinicName)||'ddsDental'});
+    renderDocForm();
+  }
+  renderDocPreview();
+}
+
+/* ── Type-specific forms ── */
+function renderDocForm(){
+  var html=renderDocPatientPicker();
+  if(docType==='prescription'){
+    html+='<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;">'+
+      '<div style="font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:10px;">Medications</div>';
+    docPrescription.medications.forEach(function(m,i){
+      html+='<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+          '<span style="font-size:11px;color:var(--faint);font-weight:600;">Medicine '+(i+1)+'</span>'+
+          '<button onclick="removeDocMed(\''+m.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--faint);">✕</button>'+
+        '</div>'+
+        '<div class="field-row" style="margin-bottom:8px;">'+
+          '<input type="text" value="'+m.name.replace(/"/g,'&quot;')+'" placeholder="Amoxicillin" oninput="updateDocMed(\''+m.id+'\',\'name\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+          '<input type="text" value="'+m.dose.replace(/"/g,'&quot;')+'" placeholder="500mg" oninput="updateDocMed(\''+m.id+'\',\'dose\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<input type="text" value="'+m.instructions.replace(/"/g,'&quot;')+'" placeholder="1 capsule every 8 hours for 7 days" oninput="updateDocMed(\''+m.id+'\',\'instructions\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+          '<input type="text" value="'+m.qty.replace(/"/g,'&quot;')+'" placeholder="Qty: 21" oninput="updateDocMed(\''+m.id+'\',\'qty\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+        '</div>'+
+      '</div>';
+    });
+    html+='<button onclick="addDocMed()" style="width:100%;padding:9px;border:1px dashed var(--border2);border-radius:9px;background:none;color:var(--blue);font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:12px;">+ Add medicine</button>'+
+      '<div class="field" style="margin-bottom:0;"><label>Additional notes</label><textarea id="doc-rx-notes" oninput="docPrescription.notes=this.value;renderDocPreview();" rows="2">'+docPrescription.notes+'</textarea></div>'+
+    '</div>';
+  } else if(docType==='certificate'){
+    html+='<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;">'+
+      '<div style="font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:10px;">Certificate type</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">';
+    Object.keys(CERT_TEMPLATES).forEach(function(t){
+      var active=docCertificate.certType===t;
+      html+='<button onclick="chooseDocCertType(\''+t.replace(/'/g,"\\'")+'\')" style="padding:8px 10px;border-radius:9px;text-align:left;cursor:pointer;font-family:inherit;font-size:12px;border:'+(active?'2px solid var(--blue)':'1px solid var(--border)')+';background:'+(active?'var(--blue-light)':'#fff')+';color:var(--text);">'+t+'</button>';
+    });
+    html+='</div>'+
+      '<div class="field" style="margin-bottom:0;"><label>Certificate text (editable)</label><textarea id="doc-cert-body" oninput="docCertificate.body=this.value;renderDocPreview();" rows="7">'+(docCertificate.body||'')+'</textarea></div>'+
+    '</div>';
+  } else if(docType==='referral'){
+    html+='<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;">'+
+      '<div class="field"><label>Referred to (doctor name)</label><input type="text" value="'+docReferral.referredTo.replace(/"/g,'&quot;')+'" oninput="docReferral.referredTo=this.value;renderDocPreview();" placeholder="Dr. Ana Reyes"/></div>'+
+      '<div class="field"><label>Referred to (clinic/hospital)</label><input type="text" value="'+docReferral.referredToClinic.replace(/"/g,'&quot;')+'" oninput="docReferral.referredToClinic=this.value;renderDocPreview();" placeholder="Oral Surgery Center"/></div>'+
+      '<div class="field"><label>Reason for referral</label><input type="text" value="'+docReferral.reason.replace(/"/g,'&quot;')+'" oninput="docReferral.reason=this.value;renderDocPreview();" placeholder="Impacted third molar extraction"/></div>'+
+      '<div class="field" style="margin-bottom:0;"><label>Clinical findings (optional)</label><textarea oninput="docReferral.findings=this.value;renderDocPreview();" rows="3">'+docReferral.findings+'</textarea></div>'+
+    '</div>';
+  } else if(docType==='estimate'){
+    html+='<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;">'+
+      '<div style="font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:10px;">Line items</div>';
+    docEstimate.items.forEach(function(it,i){
+      html+='<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+          '<span style="font-size:11px;color:var(--faint);font-weight:600;">Item '+(i+1)+'</span>'+
+          '<button onclick="removeDocEstItem(\''+it.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--faint);">✕</button>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;">'+
+          '<input type="text" value="'+it.procedure.replace(/"/g,'&quot;')+'" placeholder="Composite filling" oninput="updateDocEstItem(\''+it.id+'\',\'procedure\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+          '<input type="text" value="'+it.tooth.replace(/"/g,'&quot;')+'" placeholder="Tooth 16" oninput="updateDocEstItem(\''+it.id+'\',\'tooth\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+          '<input type="number" value="'+it.cost+'" placeholder="1500" oninput="updateDocEstItem(\''+it.id+'\',\'cost\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
+        '</div>'+
+      '</div>';
+    });
+    html+='<button onclick="addDocEstItem()" style="width:100%;padding:9px;border:1px dashed var(--border2);border-radius:9px;background:none;color:var(--blue);font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:12px;">+ Add item</button>'+
+      '<div class="field"><label>Valid for (days)</label><input type="number" value="'+docEstimate.validityDays+'" oninput="docEstimate.validityDays=this.value;renderDocPreview();"/></div>'+
+      '<div class="field" style="margin-bottom:0;"><label>Notes</label><textarea oninput="docEstimate.notes=this.value;renderDocPreview();" rows="2">'+docEstimate.notes+'</textarea></div>'+
+    '</div>';
+  }
+  document.getElementById('doc-form-col').innerHTML=html;
+}
+function addDocMed(){docPrescription.medications.push({id:uid(),name:'',dose:'',instructions:'',qty:''});renderDocForm();}
+function removeDocMed(id){docPrescription.medications=docPrescription.medications.filter(function(m){return m.id!==id;});renderDocForm();renderDocPreview();}
+function updateDocMed(id,key,val){var m=docPrescription.medications.find(function(x){return x.id===id;});if(m){m[key]=val;}renderDocPreview();}
+function chooseDocCertType(t){
+  docCertificate.certType=t;
+  docCertificate.body=CERT_TEMPLATES[t]({name:docPatient.name,age:docPatient.age,date:docDate,clinicName:(DB.config&&DB.config.clinicName)||'ddsDental'});
+  renderDocForm();renderDocPreview();
+}
+function addDocEstItem(){docEstimate.items.push({id:uid(),procedure:'',tooth:'',cost:''});renderDocForm();}
+function removeDocEstItem(id){docEstimate.items=docEstimate.items.filter(function(it){return it.id!==id;});renderDocForm();renderDocPreview();}
+function updateDocEstItem(id,key,val){var it=docEstimate.items.find(function(x){return x.id===id;});if(it){it[key]=val;}renderDocPreview();}
+
+/* ── Preview "paper" ── */
+function docHeaderHtml(title){
+  var cfg=DB.config||{};
+  return'<div style="text-align:center;margin-bottom:14px;">'+
+    '<div style="font-family:\'Playfair Display\',serif;font-weight:700;font-size:22px;color:var(--blue);">'+(cfg.clinicName||'Clinic Name')+'</div>'+
+    '<div style="font-family:\'DM Sans\',sans-serif;font-size:11.5px;color:var(--muted);margin-top:2px;">'+[cfg.docAddress,cfg.docPhone].filter(Boolean).join('  ·  ')+'</div>'+
+  '</div>'+
+  '<div style="height:2px;background:var(--blue);margin-bottom:16px;"></div>'+
+  '<div style="text-align:center;font-family:\'DM Sans\',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.16em;color:var(--text);margin-bottom:20px;">'+title+'</div>';
+}
+function docPatientBlockHtml(){
+  return'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">'+
+    '<div><span style="color:var(--faint);">Patient: </span><strong>'+(docPatient.name||'___________________')+'</strong></div>'+
+    '<div><span style="color:var(--faint);">Date: </span><strong>'+fmtDate(docDate)+'</strong></div>'+
+    '<div><span style="color:var(--faint);">Age: </span><strong>'+(docPatient.age||'—')+'</strong></div>'+
+    '<div><span style="color:var(--faint);">Address: </span><strong>'+(docPatient.address||'—')+'</strong></div>'+
+  '</div>';
+}
+function docSignatureHtml(){
+  var cfg=DB.config||{};
+  return'<div style="margin-top:46px;display:flex;justify-content:flex-end;">'+
+    '<div style="text-align:center;min-width:220px;">'+
+      '<div style="border-bottom:1px solid var(--text);height:34px;"></div>'+
+      '<div style="font-family:\'DM Sans\',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-top:6px;">'+(cfg.doctorName||'Dentist Name, DMD')+'</div>'+
+      '<div style="font-family:\'DM Sans\',sans-serif;font-size:11px;color:var(--faint);">'+[cfg.docPrcNo?('PRC License No. '+cfg.docPrcNo):'',cfg.docPtrNo?('PTR No. '+cfg.docPtrNo):''].filter(Boolean).join(' · ')+'</div>'+
+    '</div></div>';
+}
+function renderDocPreview(){
+  var t=DOC_TYPES.find(function(d){return d.key===docType;});
+  var html=docHeaderHtml(t.title);
+  if(docType==='prescription'){
+    html+=docPatientBlockHtml();
+    html+='<div style="font-family:\'Playfair Display\',serif;font-size:30px;color:var(--blue);margin-bottom:10px;">℞</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);line-height:1.9;">';
+    var meds=docPrescription.medications.filter(function(m){return m.name;});
+    if(meds.length===0)html+='<div style="color:var(--faint);font-style:italic;">No medications added yet.</div>';
+    meds.forEach(function(m,i){
+      html+='<div style="margin-bottom:10px;"><strong>'+(i+1)+'. '+m.name+(m.dose?' '+m.dose:'')+'</strong>'+(m.qty?'<span style="color:var(--faint);"> — Qty: '+m.qty+'</span>':'')+
+        (m.instructions?'<div style="color:var(--muted);font-size:12.5px;margin-left:18px;">Sig: '+m.instructions+'</div>':'')+'</div>';
+    });
+    html+='</div>';
+    if(docPrescription.notes)html+='<div style="margin-top:14px;font-family:\'DM Sans\',sans-serif;font-size:12.5px;color:var(--muted);font-style:italic;">'+docPrescription.notes+'</div>';
+    html+=docSignatureHtml();
+  } else if(docType==='certificate'){
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);line-height:1.9;text-align:justify;margin-bottom:24px;">'+(docCertificate.body||'Certificate text will appear here.')+'</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:12.5px;color:var(--muted);">Issued this '+fmtDate(docDate)+((DB.config&&DB.config.docAddress)?(' at '+DB.config.docAddress):'')+'.</div>';
+    html+=docSignatureHtml();
+  } else if(docType==='referral'){
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--muted);margin-bottom:16px;">'+fmtDate(docDate)+'</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);margin-bottom:14px;">Dear Dr. '+(docReferral.referredTo||'___________________')+(docReferral.referredToClinic?(', '+docReferral.referredToClinic):'')+',</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);line-height:1.9;text-align:justify;margin-bottom:14px;">I am referring my patient, <strong>'+(docPatient.name||'___________________')+'</strong> ('+(docPatient.age?(docPatient.age+' y/o'):'—')+'), for further evaluation and management of: <strong>'+(docReferral.reason||'___________________')+'</strong>.</div>';
+    if(docReferral.findings)html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);line-height:1.9;text-align:justify;margin-bottom:14px;"><strong>Clinical findings:</strong> '+docReferral.findings+'</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);">Thank you for your time and expertise. Please feel free to contact me should you need further information.</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:13.5px;color:var(--text);margin-top:14px;">Sincerely,</div>';
+    html+=docSignatureHtml();
+  } else if(docType==='estimate'){
+    html+=docPatientBlockHtml();
+    var total=0;
+    var items=docEstimate.items.filter(function(it){return it.procedure;});
+    html+='<table style="width:100%;border-collapse:collapse;font-family:\'DM Sans\',sans-serif;font-size:13px;margin-bottom:8px;"><thead><tr style="border-bottom:2px solid var(--text);">'+
+      '<th style="text-align:left;padding:6px 4px;color:var(--faint);font-size:11px;text-transform:uppercase;">Procedure</th>'+
+      '<th style="text-align:left;padding:6px 4px;color:var(--faint);font-size:11px;text-transform:uppercase;">Tooth</th>'+
+      '<th style="text-align:right;padding:6px 4px;color:var(--faint);font-size:11px;text-transform:uppercase;">Cost</th></tr></thead><tbody>';
+    if(items.length===0)html+='<tr><td colspan="3" style="padding:10px 4px;color:var(--faint);font-style:italic;">No items added yet.</td></tr>';
+    items.forEach(function(it){
+      total+=Number(it.cost)||0;
+      html+='<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 4px;">'+it.procedure+'</td><td style="padding:7px 4px;">'+(it.tooth||'—')+'</td><td style="padding:7px 4px;text-align:right;">'+(it.cost?Number(it.cost).toLocaleString(undefined,{minimumFractionDigits:2}):'—')+'</td></tr>';
+    });
+    html+='</tbody><tfoot><tr><td colspan="2" style="padding:10px 4px;text-align:right;font-weight:700;">Total (PHP)</td><td style="padding:10px 4px;text-align:right;font-weight:700;color:var(--blue);font-size:14px;">'+total.toLocaleString(undefined,{minimumFractionDigits:2})+'</td></tr></tfoot></table>';
+    if(docEstimate.notes)html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:12.5px;color:var(--muted);font-style:italic;margin-top:6px;">'+docEstimate.notes+'</div>';
+    html+='<div style="font-family:\'DM Sans\',sans-serif;font-size:11.5px;color:var(--faint);margin-top:10px;">This estimate is valid for '+(docEstimate.validityDays||30)+' days from the date of issue and may change based on clinical findings at the time of treatment.</div>';
+    html+=docSignatureHtml();
+  }
+  document.getElementById('doc-paper').innerHTML=html;
+}
+
+/* ── Export ── */
+function docFilenameBase(){
+  var nm=(docPatient.name||'document').replace(/[^a-z0-9]+/gi,'_');
+  return docType+'_'+nm+'_'+docDate;
+}
+function exportDocPDF(){
+  var btn=document.getElementById('doc-pdf-btn');
+  btn.textContent='Generating…';
+  html2canvas(document.getElementById('doc-paper'),{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+    var imgData=canvas.toDataURL('image/png');
+    var jsPDFCtor=window.jspdf.jsPDF;
+    var pdf=new jsPDFCtor({unit:'pt',format:'letter'});
+    var pageWidth=pdf.internal.pageSize.getWidth();
+    var pageHeight=pdf.internal.pageSize.getHeight();
+    var ratio=canvas.height/canvas.width;
+    var w=pageWidth-48,h=w*ratio;
+    if(h>pageHeight-48){h=pageHeight-48;w=h/ratio;}
+    var x=(pageWidth-w)/2,y=24;
+    pdf.addImage(imgData,'PNG',x,y,w,h);
+    pdf.save(docFilenameBase()+'.pdf');
+    btn.textContent='⬇ Download PDF';
+  }).catch(function(){
+    alert('Could not generate the PDF. Please try again.');
+    btn.textContent='⬇ Download PDF';
+  });
+}
+function exportDocJPEG(){
+  var btn=document.getElementById('doc-jpeg-btn');
+  btn.textContent='Generating…';
+  html2canvas(document.getElementById('doc-paper'),{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+    var url=canvas.toDataURL('image/jpeg',0.95);
+    var a=document.createElement('a');
+    a.href=url;a.download=docFilenameBase()+'.jpg';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    btn.textContent='🖼 Download JPEG';
+  }).catch(function(){
+    alert('Could not generate the image. Please try again.');
+    btn.textContent='🖼 Download JPEG';
+  });
 }
 
 /* ── init ── */
