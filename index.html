@@ -3300,6 +3300,25 @@ window.onerror = function(msg, url, line, col, err){
   return false;
 };
 
+/* ── TEMPORARY DIAGNOSTIC — on-screen tap log, shows exactly what element
+   receives every tap/click anywhere on the page. Safe to remove later. ── */
+(function(){
+  var panel=document.createElement('div');
+  panel.id='tap-debug-panel';
+  panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,.92);color:#0f0;font-family:monospace;font-size:11px;padding:8px 10px;max-height:140px;overflow-y:auto;line-height:1.5;pointer-events:none;';
+  panel.innerHTML='<div style="color:#fff;font-weight:bold;">TAP DEBUG LOG (tap anywhere):</div>';
+  document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(panel);});
+  if(document.body)document.body.appendChild(panel);
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var desc=t.tagName+(t.id?('#'+t.id):'')+(t.className&&typeof t.className==='string'?('.'+t.className.split(' ').join('.')):'');
+    var line=document.createElement('div');
+    line.textContent='TAP → '+desc+'  @('+Math.round(e.clientX)+','+Math.round(e.clientY)+')';
+    panel.appendChild(line);
+    panel.scrollTop=panel.scrollHeight;
+  },true);
+})();
+
 /* ── init ── */
 function init(){
   loadLocal();
