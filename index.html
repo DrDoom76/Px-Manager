@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -809,6 +808,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <label for="cfg-auto-calendar" style="margin:0;cursor:pointer;font-size:13px;">📅 Auto-open Google Calendar when saving a new appointment</label>
             </div>
             <button class="btn-primary" id="save-cfg-btn">Save Settings</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🧾 Documents Letterhead</div></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;">Used on prescriptions, certificates, referrals and estimates in the Documents app. Clinic name and dentist name are shared with the WhatsApp settings above.</p>
+            <div class="field"><label>Clinic address</label><input type="text" id="cfg-doc-address" placeholder="Street, City"/></div>
+            <div class="field"><label>Clinic phone</label><input type="text" id="cfg-doc-phone" placeholder="0917 000 0000"/></div>
+            <div class="field-row">
+              <div class="field"><label>PRC license no.</label><input type="text" id="cfg-doc-prc" placeholder="0123456"/></div>
+              <div class="field"><label>PTR no.</label><input type="text" id="cfg-doc-ptr" placeholder="7654321"/></div>
+            </div>
+            <button class="btn-primary" id="save-doc-cfg-btn">Save Letterhead Details</button>
           </div>
         </div>
         <div class="card">
@@ -2559,6 +2571,10 @@ function renderSettingsPage(){
   document.getElementById('cfg-semaphore-key').value=cfg.semaphoreKey||'';
   document.getElementById('cfg-sender-name').value=cfg.senderName||'ddsDental';
   document.getElementById('cfg-auto-calendar').checked=cfg.autoCalendar!==false; /* default ON */
+  document.getElementById('cfg-doc-address').value=cfg.docAddress||'333 G. Araneta Ave., Quezon City';
+  document.getElementById('cfg-doc-phone').value=cfg.docPhone||'09228043887/09673804773';
+  document.getElementById('cfg-doc-prc').value=cfg.docPrcNo||'42693';
+  document.getElementById('cfg-doc-ptr').value=cfg.docPtrNo||'';
 
   document.getElementById('save-cfg-btn').onclick=function(){
     if(!DB.config)DB.config={};
@@ -2566,6 +2582,14 @@ function renderSettingsPage(){
     DB.config.doctorName=document.getElementById('cfg-doctor-name').value.trim()||'Dr. Dave Sison';
     DB.config.autoCalendar=document.getElementById('cfg-auto-calendar').checked;
     save();showToast('[OK] Settings saved','#15803d');
+  };
+  document.getElementById('save-doc-cfg-btn').onclick=function(){
+    if(!DB.config)DB.config={};
+    DB.config.docAddress=document.getElementById('cfg-doc-address').value.trim();
+    DB.config.docPhone=document.getElementById('cfg-doc-phone').value.trim();
+    DB.config.docPrcNo=document.getElementById('cfg-doc-prc').value.trim();
+    DB.config.docPtrNo=document.getElementById('cfg-doc-ptr').value.trim();
+    save();showToast('[OK] Letterhead details saved','#15803d');
   };
   document.getElementById('save-semaphore-btn').onclick=function(){
     if(!DB.config)DB.config={};
