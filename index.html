@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2000,8 +2001,6 @@ function saveAppt(){
 
 /* ── Patient Modal ── */
 function openAddPatient(){
-  try{
-  debugLog('openAddPatient() called');
   editPatientId=null;
   document.getElementById('patient-modal-title').textContent='New Patient';
   document.getElementById('p-name').value='';
@@ -2009,8 +2008,6 @@ function openAddPatient(){
   document.getElementById('p-contact').value='';
   document.getElementById('p-notes').value='';
   openModal('patient-modal');
-  debugLog('openAddPatient() finished, modal should be open');
-  }catch(err){debugLog('openAddPatient FAILED: '+err.message,true);}
 }
 function openPatientDetail(pid){
   var p=DB.patients.find(function(x){return x.id===pid;});
@@ -2136,9 +2133,7 @@ function mesialSideForTooth(num){
 
 /* ── Open / close the full-screen chart ── */
 function openPatientChart(pid){
-  try{
-  debugLog('openPatientChart('+pid+') called');
-  var p=getPatient(pid);if(!p){debugLog('openPatientChart: no patient found for id '+pid,true);return;}
+  var p=getPatient(pid);if(!p)return;
   currentChartPatientId=pid;
   if(!p.teeth)p.teeth={};
   if(!p.history)p.history=[];
@@ -2146,8 +2141,6 @@ function openPatientChart(pid){
   renderPatientChartHeader();
   document.getElementById('patient-chart-screen').style.display='block';
   switchChartTab('odontogram');
-  debugLog('openPatientChart() finished, chart should be visible');
-  }catch(err){debugLog('openPatientChart FAILED: '+err.message,true);}
 }
 function closePatientChart(){
   document.getElementById('patient-chart-screen').style.display='none';
@@ -3299,38 +3292,6 @@ function exportDocJPEG(){
     btn.textContent='🖼 Download JPEG';
   });
 }
-
-/* ── TEMPORARY DIAGNOSTIC — on-screen tap log AND error log, shows exactly
-   what element receives every tap, and any JS error, directly on screen
-   (alert() can be silently suppressed in some iOS contexts, so we avoid it
-   entirely here). Safe to remove later. ── */
-var tapDebugPanel=null;
-function debugLog(msg,isError){
-  if(!tapDebugPanel)return;
-  var line=document.createElement('div');
-  line.textContent=msg;
-  if(isError)line.style.cssText='color:#ff5555;font-weight:bold;';
-  tapDebugPanel.appendChild(line);
-  tapDebugPanel.scrollTop=tapDebugPanel.scrollHeight;
-}
-window.onerror=function(msg,url,line,col,err){
-  debugLog('JS ERROR: '+msg+'  (line '+line+', col '+col+')',true);
-  return false;
-};
-(function(){
-  var panel=document.createElement('div');
-  panel.id='tap-debug-panel';
-  panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,.92);color:#0f0;font-family:monospace;font-size:11px;padding:8px 10px;max-height:160px;overflow-y:auto;line-height:1.5;pointer-events:none;';
-  panel.innerHTML='<div style="color:#fff;font-weight:bold;">TAP/ERROR DEBUG LOG (tap anywhere):</div>';
-  document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(panel);});
-  if(document.body)document.body.appendChild(panel);
-  tapDebugPanel=panel;
-  document.addEventListener('click',function(e){
-    var t=e.target;
-    var desc=t.tagName+(t.id?('#'+t.id):'')+(t.className&&typeof t.className==='string'?('.'+t.className.split(' ').join('.')):'');
-    debugLog('TAP → '+desc+'  @('+Math.round(e.clientX)+','+Math.round(e.clientY)+')');
-  },true);
-})();
 
 /* ── init ── */
 function init(){
