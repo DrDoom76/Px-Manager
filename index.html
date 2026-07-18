@@ -2456,7 +2456,7 @@ function formatPHNumber(num){
 function buildReminderMsg(appt,daysBefore){
   var cfg=DB.config||{};
   var clinic=cfg.clinicName||'ddsDental';
-  var doctor=cfg.doctorName||'Dr. Dave Sison';
+  var doctor=cfg.doctorName||'Dr. Dave Sison DMD';
   var tname=typeName(appt);
   var dateStr=fmtDate(appt.date);
   var timeStr=appt.time?fmtTime(appt.time):'';
@@ -2567,7 +2567,7 @@ function sendSemaphoreSMS(number,message){
 function renderSettingsPage(){
   var cfg=DB.config||{};
   document.getElementById('cfg-clinic-name').value=cfg.clinicName||'ddsDental';
-  document.getElementById('cfg-doctor-name').value=cfg.doctorName||'Dr. Dave Sison';
+  document.getElementById('cfg-doctor-name').value=cfg.doctorName||'Dr. Dave Sison DMD';
   document.getElementById('cfg-semaphore-key').value=cfg.semaphoreKey||'';
   document.getElementById('cfg-sender-name').value=cfg.senderName||'ddsDental';
   document.getElementById('cfg-auto-calendar').checked=cfg.autoCalendar!==false; /* default ON */
@@ -2579,7 +2579,7 @@ function renderSettingsPage(){
   document.getElementById('save-cfg-btn').onclick=function(){
     if(!DB.config)DB.config={};
     DB.config.clinicName=document.getElementById('cfg-clinic-name').value.trim()||'ddsDental';
-    DB.config.doctorName=document.getElementById('cfg-doctor-name').value.trim()||'Dr. Dave Sison';
+    DB.config.doctorName=document.getElementById('cfg-doctor-name').value.trim()||'Dr. Dave Sison DMD';
     DB.config.autoCalendar=document.getElementById('cfg-auto-calendar').checked;
     save();showToast('[OK] Settings saved','#15803d');
   };
@@ -3054,7 +3054,7 @@ var CERT_TEMPLATES={
 var docType='prescription';
 var docDate=today();
 var docPatient={id:null,name:'',age:'',dob:'',contact:'',address:''};
-var docPrescription={medications:[{id:uid(),name:'',dose:'',instructions:'',qty:''}],notes:''};
+var docPrescription={medications:[{id:uid(),category:'Antibiotic',name:'',dose:'',instructions:'',qty:''},{id:uid(),category:'Pain Reliever',name:'',dose:'',instructions:'',qty:''}],notes:''};
 var docCertificate={certType:'Medical/Dental Certificate',body:''};
 var docReferral={referredTo:'',referredToClinic:'',reason:'',findings:''};
 var docEstimate={items:[{id:uid(),procedure:'',tooth:'',cost:''}],notes:'',validityDays:'30'};
@@ -3104,10 +3104,13 @@ function onDocPatientInput(){
   var match=DB.patients.find(function(p){return p.name===name;});
   if(match){
     docPatient={id:match.id,name:match.name,age:match.age||'',dob:match.dob||'',contact:match.contact||'',address:match.address||''};
+    document.getElementById('doc-p-age').value=docPatient.age;
+    document.getElementById('doc-p-contact').value=docPatient.contact;
+    document.getElementById('doc-p-address').value=docPatient.address;
   } else {
     docPatient.id=null;
   }
-  renderDocForm();renderDocPreview();
+  renderDocPreview();
 }
 function onDocPatientField(key,val){
   docPatient[key]=val;
@@ -3129,10 +3132,13 @@ function renderDocForm(){
     html+='<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;">'+
       '<div style="font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:10px;">Medications</div>';
     docPrescription.medications.forEach(function(m,i){
+      var cats=['Antibiotic','Pain Reliever','Other'];
       html+='<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
-          '<span style="font-size:11px;color:var(--faint);font-weight:600;">Medicine '+(i+1)+'</span>'+
-          '<button onclick="removeDocMed(\''+m.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--faint);">✕</button>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">'+
+          '<select onchange="updateDocMed(\''+m.id+'\',\'category\',this.value)" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:#fff;font-weight:600;color:var(--text);">'+
+            cats.map(function(c){return'<option value="'+c+'"'+(m.category===c?' selected':'')+'>'+c+'</option>';}).join('')+
+          '</select>'+
+          '<button onclick="removeDocMed(\''+m.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--faint);flex-shrink:0;">✕</button>'+
         '</div>'+
         '<div class="field-row" style="margin-bottom:8px;">'+
           '<input type="text" value="'+m.name.replace(/"/g,'&quot;')+'" placeholder="Amoxicillin" oninput="updateDocMed(\''+m.id+'\',\'name\',this.value)" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#fff;"/>'+
@@ -3188,7 +3194,7 @@ function renderDocForm(){
   }
   document.getElementById('doc-form-col').innerHTML=html;
 }
-function addDocMed(){docPrescription.medications.push({id:uid(),name:'',dose:'',instructions:'',qty:''});renderDocForm();}
+function addDocMed(){docPrescription.medications.push({id:uid(),category:'Other',name:'',dose:'',instructions:'',qty:''});renderDocForm();}
 function removeDocMed(id){docPrescription.medications=docPrescription.medications.filter(function(m){return m.id!==id;});renderDocForm();renderDocPreview();}
 function updateDocMed(id,key,val){var m=docPrescription.medications.find(function(x){return x.id===id;});if(m){m[key]=val;}renderDocPreview();}
 function chooseDocCertType(t){
@@ -3223,7 +3229,7 @@ function docSignatureHtml(){
   return'<div style="margin-top:46px;display:flex;justify-content:flex-end;">'+
     '<div style="text-align:center;min-width:220px;">'+
       '<div style="border-bottom:1px solid var(--text);height:34px;"></div>'+
-      '<div style="font-family:\'DM Sans\',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-top:6px;">'+(cfg.doctorName||'Dentist Name, DMD')+'</div>'+
+      '<div style="font-family:\'DM Sans\',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-top:6px;">'+(cfg.doctorName||'Dr. Dave Sison DMD')+'</div>'+
       '<div style="font-family:\'DM Sans\',sans-serif;font-size:11px;color:var(--faint);">'+[cfg.docPrcNo?('PRC License No. '+cfg.docPrcNo):'',cfg.docPtrNo?('PTR No. '+cfg.docPtrNo):''].filter(Boolean).join(' · ')+'</div>'+
     '</div></div>';
 }
@@ -3237,7 +3243,9 @@ function renderDocPreview(){
     var meds=docPrescription.medications.filter(function(m){return m.name;});
     if(meds.length===0)html+='<div style="color:var(--faint);font-style:italic;">No medications added yet.</div>';
     meds.forEach(function(m,i){
-      html+='<div style="margin-bottom:10px;"><strong>'+(i+1)+'. '+m.name+(m.dose?' '+m.dose:'')+'</strong>'+(m.qty?'<span style="color:var(--faint);"> — Qty: '+m.qty+'</span>':'')+
+      html+='<div style="margin-bottom:10px;">'+
+        (m.category?'<div style="font-size:10.5px;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:2px;">'+m.category+'</div>':'')+
+        '<strong>'+(i+1)+'. '+m.name+(m.dose?' '+m.dose:'')+'</strong>'+(m.qty?'<span style="color:var(--faint);"> — Qty: '+m.qty+'</span>':'')+
         (m.instructions?'<div style="color:var(--muted);font-size:12.5px;margin-left:18px;">Sig: '+m.instructions+'</div>':'')+'</div>';
     });
     html+='</div>';
